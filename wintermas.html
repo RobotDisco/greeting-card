@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Holiday Craftiness!</title>
+  <style>
+    canvas {
+	position: absolute;
+	top: 0px;
+	left: 0px;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="background"></canvas>
+  <canvas id="snow"></canvas>
+  </script>
+</body>
+
+<script>
+  // This is actually a function, basically a short alias to fetch an element by
+  // name in the browser's runtime. I think bind() basically sets the "this"
+  // variable in the function for weirdo javascript reasions.
+  let el = document.getElementById.bind(document)
+  
+  function prepCanvas(canv) {
+      // We're working in 2D
+      let ctx = canv.getContext('2d')
+      // size the canvas appropriately
+      let w = window.innerWidth, h = window.innerHeight
+      canv.width = w; canv.height = h
+      // This is syntax for returning an anonymous Javascrupt object where the
+      // field names are the same as the provided value variable names.
+      return {canv, ctx, w, h}
+  }
+
+  let bck = prepCanvas(el('background'))
+  let snow = prepCanvas(el('snow'))
+  
+
+  // Paint the canvas black
+  bck.ctx.fillStyle = '#000';
+  bck.ctx.fillRect(0, 0, bck.w, bck.h)
+
+  // make some snowobjects. snobjects.
+  let snobjects = Array(1600).fill(0).map(_ => {
+      return {
+	  x: Math.random() * snow.w,
+	  y: -50,
+	  r: Math.random() * 10,
+	  dy: Math.random() * 5 + 2,
+	  delay: Math.random() * 500,
+	  ff: false,
+	  render() {
+	      snow.ctx.fillRect(this.x, this.y, this.r, this.r)
+	  },
+	  step() {
+	      if(this.delay-- > 0) return
+	      this.y += this.dy + Math.random()
+	      this.x += Math.random() - 0.5
+	      if(this.y >= snow.h - 50 - this.r) {
+	    	  this.ff = !this.ff
+	    	  if(this.ff) return this.delay = 300
+	    	  this.y = 0
+	    	  this.x = Math.random() * snow.w
+	      }
+	  }
+      }
+  })
+
+  // draw falling snowflakes
+  snow.ctx.fillStyle = '#fff';
+  function snowfall() {
+      snow.ctx.clearRect(0,0, snow.w, snow.h)
+      snobjects.forEach(sn => {
+	  sn.render()
+	  sn.step()
+      })
+  }
+
+  // main loop
+  function go() {
+      t++
+      snowfall()
+      requestAnimationFrame(go)
+  }
+
+  let t = 0
+  go()
+</script>
+</html>
