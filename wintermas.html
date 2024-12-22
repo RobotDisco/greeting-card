@@ -4,6 +4,45 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ho ho. Ho ho ho.</title>
+  <style>
+       .audio-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.8);
+            border: none;
+            cursor: pointer;
+            color: white;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s, background 0.2s;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .audio-button:hover {
+            transform: scale(1.1);
+            background: rgba(0, 0, 0, 0.9);
+        }
+
+        .audio-button:active {
+            transform: scale(0.95);
+        }
+
+        /* Optional loading animation */
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading {
+            animation: spin 1s linear infinite;
+        }    
+  </style>
 </head>
 <body>
   <!-- Use a Z-Index of 1 to hover over the background canvas -->
@@ -20,7 +59,64 @@
       </textPath>
   </svg>
 </body>
-
+<footer>
+  <div style="position: absolute; left: 0px; top: 97%; z-index: 99;">Audio composed by <a href="https://freemusicarchive.org/music/xennial/single/ghetto-carol/">Xennial</a></div>
+  <button class="audio-button" id="audioButton">▶️</button>
+  <audio id="audio" src="https://files.freemusicarchive.org/storage-freemusicarchive-org/tracks/aAYAxYudW1XXno1HNvZ6LgRIFzFVAl6M1HqwxNcE.mp3"></audio>
+    <script>
+    const audio = document.getElementById('audio');
+  const button = document.getElementById('audioButton');
+  let isLoading = false;
+  
+  // Handle play/pause
+  button.addEventListener('click', () => {
+      if (isLoading) return;
+      
+      if (audio.paused) {
+          isLoading = true;
+          button.textContent = '⏳';
+          button.classList.add('loading');
+          
+          audio.play()
+              .then(() => {
+                  button.textContent = '⏸️';
+                  isLoading = false;
+                  button.classList.remove('loading');
+              })
+              .catch(error => {
+                  console.error('Error playing audio:', error);
+                  button.textContent = '⚠️';
+                  isLoading = false;
+                  button.classList.remove('loading');
+                  setTimeout(() => {
+                      button.textContent = '▶️';
+                  }, 2000);
+              });
+      } else {
+          audio.pause();
+          button.textContent = '▶️';
+      }
+  });
+  
+  // Reset button when audio ends
+  audio.addEventListener('ended', () => {
+      button.textContent = '▶️';
+  });
+  
+  // Error handling
+  audio.addEventListener('error', () => {
+      button.textContent = '⚠️';
+      setTimeout(() => {
+          button.textContent = '▶️';
+      }, 2000);
+  });
+  
+  // Optional: Preload audio
+  audio.addEventListener('canplaythrough', () => {
+      console.log('Audio ready to play');
+  });
+</script>
+</footer>
 <script>
   // This is actually a function, basically a short alias to fetch an element by
   // name in the browser's runtime. I think bind() basically sets the "this"
