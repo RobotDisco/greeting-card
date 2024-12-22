@@ -103,6 +103,12 @@
   terrain.ctx.fillStyle = '#464'
   draw_hill(hill5, 150, 0.01)
 
+  // Some kind of image data for my tree later
+  let treeImageData = terrain.ctx.getImageData(0, 0, width, height).data
+  // Somehow this relates to pixel collision but I don't understand why
+  let pixelq = (data, x, y) => data[(y | 0) * width * 4 + (x | 0) * 4]
+
+
   // Steal the svg we already have so we render dynamix text underneath it
   let curvedImg = new Image()
   let svgElem = el('curvedText')
@@ -156,7 +162,7 @@
 	      }
 	      // If we're sitting at the bottom of the screen delay for some
 	      // amount of time, then flag for returning to the top
-	      if(this.y >= height - 10) {
+	      if(this.y >= height - 10 || pixelq(treeImageData, this.x, this.y)) {
 	    	  this.reset = true
 		  // Exit early
 		  return this.delay = 300
