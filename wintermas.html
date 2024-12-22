@@ -6,6 +6,19 @@
   <title>Ho ho. Ho ho ho.</title>
 </head>
 <body>
+  <!-- Use a Z-Index of 1 to hover over the background canvas -->
+  <svg id="curvedText"
+       style="z-index: 1; position: absolute; top: 0px; left: 0px; width: 100%"
+       xmlns="http://www.w3.org/2000/svg"
+       viewBox="0 0 800 500"
+       preserveAspectRatio="xMidYMid meet">
+    <!-- Bezier Curves are a whole thing -->
+    <path id="curve" d="M 20,20 C 280,60 500,40 820,20" fill="transparent" />
+    <text style="dominant-baseline: hanging; font: 100px cursive; fill: #8B0000;">
+      <textPath href="#curve" xmlns:xlink="http://www.w3.org/1999/xlink">
+	Happy Holidays
+      </textPath>
+  </svg>
 </body>
 
 <script>
@@ -16,7 +29,7 @@
   // We have one browser window, so grab its width and height
   let width = window.innerWidth, height = window.innerHeight
   
-  function prepCanvas() {
+  function prepCanvas(zIndex) {
       // Create an element before attaching it to the DOM. Is this better?
       let canv = document.createElement('canvas')
       // We're working in 2D
@@ -25,7 +38,7 @@
       canv.width = width
       canv.height = height
       // I don't know why we need this but I assume it fixes the camera frame
-      canv.style = "position: absolute; top: 0px; left: 0px;"
+      canv.style = `position: absolute; top: 0px; left: 0px; z-index: ${zIndex}`
       // Actually attach the element to the document
       document.body.appendChild(canv)
 
@@ -36,9 +49,10 @@
 
   // Let's make layers for stuff I guess, although this isn't going to impact
   // the world logic
-  let bck = prepCanvas()
-  let terrain = prepCanvas()
-  let snow = prepCanvas()
+  let bck = prepCanvas(0)
+  let banner = prepCanvas(1)
+  let terrain = prepCanvas(2)
+  let snow = prepCanvas(3)
 
 
   // When Gaelan began to create the heavens and the earth, the page was complete
@@ -89,6 +103,16 @@
   terrain.ctx.fillStyle = '#464'
   draw_hill(hill5, 150, 0.01)
 
+  // Steal the svg we already have so we render dynamix text underneath it
+  let curvedImg = new Image()
+  let svgElem = el('curvedText')
+
+  // Draw a banner where text changes with the animation frame count t.
+  function magicText(frameCount) {
+      banner.ctx.fillStyle = `hsl(${frameCount} 80% 80%)`
+      banner.ctx.font = "75px cursive"
+      banner.ctx.fillText("and have a great 2025!", width / 8, height / 4, width - width / 4)
+  }
 
   // make some snowobjects. snobjects.  I guess we have 800 elements, but because
   // javascript has "sparse arrays" where .map would skip over unallocated array
@@ -165,7 +189,10 @@
   }
 
   // main loop
+  let t = 0;
   function go() {
+      t++
+      magicText(t)
       makeItSnow()
       requestAnimationFrame(go)
   }
