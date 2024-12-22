@@ -3,19 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Holiday Craftiness!</title>
-  <style>
-    canvas {
-	position: absolute;
-	top: 0px;
-	left: 0px;
-    }
-  </style>
+  <title>Ho ho. Ho ho ho.</title>
 </head>
 <body>
-  <canvas id="background"></canvas>
-  <canvas id="snow"></canvas>
-  </script>
 </body>
 
 <script>
@@ -23,70 +13,118 @@
   // name in the browser's runtime. I think bind() basically sets the "this"
   // variable in the function for weirdo javascript reasions.
   let el = document.getElementById.bind(document)
+  // We have one browser window, so grab its width and height
+  let width = window.innerWidth, height = window.innerHeight
   
-  function prepCanvas(canv) {
+  function prepCanvas() {
+      // Create an element before attaching it to the DOM. Is this better?
+      let canv = document.createElement('canvas')
       // We're working in 2D
       let ctx = canv.getContext('2d')
       // size the canvas appropriately
-      let w = window.innerWidth, h = window.innerHeight
-      canv.width = w; canv.height = h
+      canv.width = width
+      canv.height = height
+      // I don't know why we need this but I assume it fixes the camera frame
+      canv.style = "position: absolute; top: 0px; left: 0px;"
+      // Actually attach the element to the document
+      document.body.appendChild(canv)
+
       // This is syntax for returning an anonymous Javascrupt object where the
       // field names are the same as the provided value variable names.
-      return {canv, ctx, w, h}
+      return {canv, ctx}
   }
 
-  let bck = prepCanvas(el('background'))
-  let snow = prepCanvas(el('snow'))
-  
+  // Let's make layers for stuff I guess, although this isn't going to impact
+  // the world logic
+  let bck = prepCanvas()
+  let snow = prepCanvas()
 
-  // Paint the canvas black
+  // When Gaelan began to create the heavens and the earth, the page was complete
+  // chaos, and darkness covered the body of the web
   bck.ctx.fillStyle = '#000';
-  bck.ctx.fillRect(0, 0, bck.w, bck.h)
+  bck.ctx.fillRect(0, 0, width, height)
 
-  // make some snowobjects. snobjects.
-  let snobjects = Array(1600).fill(0).map(_ => {
+
+  // make some snowobjects. snobjects.  I guess we have 800 elements, but because
+  // javascript has "sparse arrays" where .map would skip over unallocated array
+  // elements, we use .fill(0) to repopulate them.
+  // let snobjects = Array(800).fill(0).map(_ => {
+  // I'll just change this to something less obvious but more efficient
+  let snobjects = Array.from({ length: 800 }, _ => {
       return {
-	  x: Math.random() * snow.w,
-	  y: -50,
-	  r: Math.random() * 10,
-	  dy: Math.random() * 5 + 2,
-	  delay: Math.random() * 500,
-	  ff: false,
+	  // Create each snowflake's starting state
+	  // Place somewhere along the width
+	  x: Math.random() * width,
+	  // Start slightly above the visible frame
+	  // (0 is the top, so -20 is 20 above the visible part)
+	  y: -10,
+	  // I'm guessing tihs means snowflake size
+	  s: Math.random() * 10,
+	  // Fall down according to real-world gravity (m/s)
+	  dy: Math.random() * 9.8,
+	  // I guess we wait some amount of time before dropping, to produce
+	  // a random effect
+	  delay: Math.random() * 400,
+	  // I'm guessing this is what we use to return snow to the top
+	  reset: false,
+	  // a function to render each snowflake ... draw it in a place, with a
+	  // size
 	  render() {
-	      snow.ctx.fillRect(this.x, this.y, this.r, this.r)
+	      snow.ctx.fillRect(this.x, this.y, this.s, this.s)
 	  },
+	  // Advance each snowflake in location
 	  step() {
-	      if(this.delay-- > 0) return
-	      this.y += this.dy + Math.random()
-	      this.x += Math.random() - 0.5
-	      if(this.y >= snow.h - 50 - this.r) {
-	    	  this.ff = !this.ff
-	    	  if(this.ff) return this.delay = 300
-	    	  this.y = 0
-	    	  this.x = Math.random() * snow.w
+	      // If we're still delaying, decrement the delay
+	      // Note that this returns early so the delay always defers whatever
+	      // the state would normally render and advance as
+	      if(this.delay-- > 0) return this.delay--
+	      // If it's time to reset, put is back in the top randomly along the
+	      // width
+	      if(this.reset) {
+		  this.reset = false
+		  this.y = -10
+		  this.x = Math.random() * width
 	      }
+	      // If we're sitting at the bottom of the screen delay for some
+	      // amount of time, then flag for returning to the top
+	      if(this.y >= height - 10) {
+	    	  this.reset = true
+		  // Exit early
+		  return this.delay = 300
+	      }
+	      // Drop the snowflake due to gravity
+	      this.y += this.dy
+	      // Move the snow leftwards some amount to give off a breezy vibe
+	      this.x += Math.random() * 1 - 1.5
+	      // If the snowflake drifts out of the visible view ...
+	      this.x = this.x < 0 ?
+		  // transport it to drift onto the right side of the screen
+	      width - this.x :
+		  // otherwise, if we're too right to be visible
+	      this.x > width ?
+		  // move us to the left of the screen? I don't think we use this
+	      this.x - width :
+		  // otherwise just leave us as is
+	      this.x
 	  }
       }
   })
 
-  // draw falling snowflakes
-  snow.ctx.fillStyle = '#fff';
-  function snowfall() {
-      snow.ctx.clearRect(0,0, snow.w, snow.h)
-      snobjects.forEach(sn => {
-	  sn.render()
-	  sn.step()
-      })
+  function makeItSnow() {
+      // Reset layer
+      snow.ctx.clearRect(0, 0, width, height)
+      // Remember that we're drawing white stuff
+      snow.ctx.fillStyle = '#fff';
+      // Render each snowsquare
+      snobjects.forEach(sn => sn.render(sn.step()))
   }
 
   // main loop
   function go() {
-      t++
-      snowfall()
+      makeItSnow()
       requestAnimationFrame(go)
   }
 
-  let t = 0
   go()
 </script>
 </html>
