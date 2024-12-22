@@ -50,6 +50,7 @@
   // Let's make layers for stuff I guess, although this isn't going to impact
   // the world logic
   let bck = prepCanvas(0)
+  let bethlehem = prepCanvas(1)
   let banner = prepCanvas(1)
   let terrain = prepCanvas(2)
   let snow = prepCanvas(3)
@@ -118,6 +119,47 @@
       banner.ctx.fillStyle = `hsl(${frameCount} 80% 80%)`
       banner.ctx.font = "75px cursive"
       banner.ctx.fillText("and have a great 2025!", width / 8, height / 4, width - width / 4)
+  }
+
+  function drawPentagram() {
+      const centreX = width / 2;
+      const centreY = height / 2;
+      const radius = Math.min(centreX, centreY) * 0.8
+
+      // Calculate points for inverted pentagram
+      const points = [];
+      // Star points of inverted pentagram
+      for (let i = 0; i < 5; i++) {
+	  const angle = (i * 72 - 18 + 100) * (Math.PI / 180);
+	  points.push({
+	      x: centreX + radius * Math.cos(angle),
+	      y: centreY + radius * Math.sin(angle)
+	  });
+      }
+      // Draw circle of stars
+      const circleStars = 66;
+      const edgeStars = 26;
+      const starSize = Math.min(width, height) / 40
+      bethlehem.ctx.font = `${starSize} sans-serif`
+
+      for (let i = 0; i < circleStars; i++) {
+	  const angle = (i * 360 / circleStars) * (Math.PI / 180);
+	  const x = centreX + radius * Math.cos(angle);
+	  const y = centreY + radius * Math.sin(angle);
+	  bethlehem.ctx.fillText('⭐', x - starSize/2, y + starSize/2);
+      }
+      for (let i = 0; i < 5; i++) {
+	  const start = points[i];
+	  const end = points[(i + 2) % 5];
+
+	  for (let j = 1; j < edgeStars; j++) { // Start from 1 to avoid overlapping stars at vertices
+	      const t = j / edgeStars;
+	      const x = start.x + (end.x - start.x) * t;
+	      const y = start.y + (end.y - start.y) * t;
+	      const size = starSize * (0.8 + Math.sin(t * Math.PI) * 0.2);
+	      bethlehem.ctx.fillText('⭐', x - size/2, y + size/2);
+	  }
+      }
   }
 
   // make some snowobjects. snobjects.  I guess we have 800 elements, but because
@@ -198,6 +240,7 @@
   let t = 0;
   function go() {
       t++
+      drawPentagram()
       magicText(t)
       makeItSnow()
       requestAnimationFrame(go)
