@@ -37,12 +37,57 @@
   // Let's make layers for stuff I guess, although this isn't going to impact
   // the world logic
   let bck = prepCanvas()
+  let terrain = prepCanvas()
   let snow = prepCanvas()
+
 
   // When Gaelan began to create the heavens and the earth, the page was complete
   // chaos, and darkness covered the body of the web
   bck.ctx.fillStyle = '#000';
   bck.ctx.fillRect(0, 0, width, height)
+
+  // let's create some hills. We'll make them based on sine/consine waves.
+  // I don't know may enough to know why these constants were picked.
+  let hill1 = x => Math.sin(x * 21 / width) * (height / 50) + height / 8
+  let hill2 = x => Math.cos(x * 15 / width) * (height / 40) + height / 9
+  let hill3 = x => -Math.cos(x * 18 / width) * (height / 60) + height / 6
+  let hill4 = x => Math.cos(x * 16 / width) * (height / 90) + height / 16
+  let hill5 = x => Math.sin(x * 8 / width) * (height / 90) + height / 22
+  // Compose the functions to look more "natural" using ceilings and averages
+  let mixmax = (...fns) => i => Math.max.apply(null, fns.map(f => f(i)))
+  let mixavg = (...fns) => i => fns.map(f => f(i)).reduce((acc, x) => acc + x, 0) / fns.length
+
+  function draw_tree(x, y, size) {
+      terrain.ctx.font = `${size}px sans-serif`
+      terrain.ctx.fillText('🎄', x, y)
+  }
+
+  // Draw a hill based on a wave function
+  // f - a wave function
+  // size - maximum size of a treee
+  // p - probability of a tree showing up
+  function draw_hill(f, size, p) {
+      let pairs = []
+      for(let i = 0; i < width; i += 1) {
+	  // Our hills are actually just tiny rectangles fitting under our curve,
+	  // filling it out to approximate an actual curve
+	  terrain.ctx.fillRect(i, height - f(i), 1, f(i))
+	  // If we go under our percentage calue randomly, draw a tree here
+	  if(Math.random() < p)
+	      pairs.push([i, height - f(i)])
+      }
+      // Draw trees at points we selected it.
+      pairs.forEach(([x, y]) =>
+	  draw_tree(x, height - Math.random() * (height - y), size + Math.random() * size * 0.5))
+  }
+
+  // Drae three hills with threes on it; different sizes and probabilities
+  terrain.ctx.fillStyle = '#242'
+  draw_hill(mixmax(hill1, hill2), 30, 0.3)
+  terrain.ctx.fillStyle = '#353'
+  draw_hill(mixavg(hill3, hill4), 80, 0.05)
+  terrain.ctx.fillStyle = '#464'
+  draw_hill(hill5, 150, 0.01)
 
 
   // make some snowobjects. snobjects.  I guess we have 800 elements, but because
